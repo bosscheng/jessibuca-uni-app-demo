@@ -12,7 +12,7 @@
         <button v-if="!playing" @click="play">播放</button>
         <button v-else @click="pause">停止</button>
       </div>
-      <div class="input" v-if="loaded" style="line-height: 30px">
+      <div class="input" v-if="loaded" style="line-height: 20px">
         <button @click="destroy">销毁</button>
         <button v-if="quieting" @click="cancelMute">取消静音</button>
         <template v-else>
@@ -39,18 +39,20 @@
   </div>
 </template>
 <script>
+
 export default {
   name: "DemoPlayer",
   props: {},
   data() {
     return {
       jessibuca: null,
+      version: '',
       wasm: false,
       vc: "ff",
       playing: false,
       quieting: true,
       loaded: false, // mute
-      showOperateBtns: false,
+      showOperateBtns: true,
       showBandwidth: false,
       err: "",
       speed: 0,
@@ -69,27 +71,33 @@ export default {
     this.jessibuca.destroy();
   },
   methods: {
-    create() {
-      this.jessibuca = new window.Jessibuca({
-        container: this.$refs.container,
-        videoBuffer: 200, // 缓存时长
-        isResize: false,
-        text: "",
-        // background: "bg.jpg",
-        loadingText: "加载中",
-        // hasAudio:false,
-        debug: true,
-        showBandwidth: this.showBandwidth, // 显示网速
-        operateBtns: {
-          fullscreen: this.showOperateBtns,
-          screenshot: this.showOperateBtns,
-          play: this.showOperateBtns,
-          audio: this.showOperateBtns,
-        },
-        vod: this.vod,
-        forceNoOffscreen: this.forceNoOffscreen,
-        isNotMute: false,
-      });
+    create(options) {
+      options = options || {};
+      this.jessibuca = new window.Jessibuca(
+          Object.assign(
+              {
+                container: this.$refs.container,
+                videoBuffer: 0.2, // 缓存时长
+                isResize: false,
+                text: "",
+                // background: "bg.jpg",
+                loadingText: "加载中",
+                // hasAudio:false,
+                debug: true,
+                showBandwidth: this.showBandwidth, // 显示网速
+                operateBtns: {
+                  fullscreen: this.showOperateBtns,
+                  screenshot: this.showOperateBtns,
+                  play: this.showOperateBtns,
+                  audio: this.showOperateBtns,
+                },
+                vod: this.vod,
+                forceNoOffscreen: this.forceNoOffscreen,
+                isNotMute: false,
+              },
+              options
+          )
+      );
       // this.jessibuca.onLog = (msg) => console.log("onLog", msg);
       // this.jessibuca.onLoad = (msg) => console.log("onLoad");
       // this.jessibuca.onRecord = (msg) => console.log("onRecord", msg);
@@ -134,14 +142,14 @@ export default {
         console.log("audioInfo", msg);
       });
 
-      // this.jessibuca.on("bps", function (bps) {
-      //   // console.log('bps', bps);
-      // });
-      // let _ts = 0;
-      // this.jessibuca.on("timeUpdate", function (ts) {
-      //   // console.log('timeUpdate,old,new,timestamp', _ts, ts, ts - _ts);
-      //   // _ts = ts;
-      // });
+      this.jessibuca.on("bps", function (bps) {
+        // console.log('bps', bps);
+      });
+      let _ts = 0;
+      this.jessibuca.on("timeUpdate", function (ts) {
+        // console.log('timeUpdate,old,new,timestamp', _ts, ts, ts - _ts);
+        _ts = ts;
+      });
 
       this.jessibuca.on("videoInfo", function (info) {
         console.log("videoInfo", info);
@@ -280,15 +288,16 @@ export default {
   },
 };
 </script>
-<style scoped>
+<style>
 .root {
   display: flex;
   place-content: center;
   margin-top: 3rem;
-  position: relative;
+  font-size: 12px;
 }
 
 .container-shell {
+  position: relative;
   backdrop-filter: blur(5px);
   background: hsla(0, 0%, 50%, 0.5);
   padding: 30px 4px 10px 4px;
@@ -299,13 +308,15 @@ export default {
   box-shadow: 0 10px 20px;
 }
 
-.container-shell:before {
-  content: "jessibuca demo player";
+.container-shell-title {
   position: absolute;
   color: darkgray;
   top: 4px;
   left: 10px;
   text-shadow: 1px 1px black;
+}
+
+.tag-version {
 }
 
 #container {
@@ -350,7 +361,6 @@ export default {
 }
 
 .page {
-  background: url(/bg.jpg);
   background-repeat: no-repeat;
   background-position: top;
 }
